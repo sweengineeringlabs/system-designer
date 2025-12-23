@@ -34,3 +34,13 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Docker
+docker-compose.override.yml
+
+# TypeScript
+*.tsbuildinfo
+
+# Test artifacts
+**/playwright-report/
+**/test-results/

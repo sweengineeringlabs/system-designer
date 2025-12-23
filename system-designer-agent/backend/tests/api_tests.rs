@@ -19,7 +19,30 @@ async fn test_health_check() {
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    assert_eq!(&body[..], b"OK");
+    let body_json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(body_json.get("status").unwrap().as_str().unwrap(), "healthy");
+    assert!(body_json.get("timestamp").is_some());
+    assert_eq!(body_json.get("version").unwrap().as_str().unwrap(), "0.1.0");
+}
+
+#[tokio::test]
+async fn test_readiness_check() {
+    let app = app();
+
+    let response = app
+        .oneshot(Request::builder().uri("/ready").body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let body_json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+
+    assert!(body_json.get("ready").unwrap().as_bool().unwrap());
+    assert!(body_json.get("checks").is_some());
+    assert!(body_json.get("timestamp").is_some());
 }
 
 #[tokio::test]
@@ -89,7 +112,7 @@ async fn test_generate_design_success() {
 
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let body_json: serde_json::Value = serde_json::from_slice(&body).unwrap();
-    
+
     let markdown = body_json.get("markdown").unwrap().as_str().unwrap();
     assert!(markdown.contains("# System Design Specification: Test Bot"));
     assert!(markdown.contains("**Use Case:** Test Bot"));
@@ -115,8 +138,12 @@ async fn test_generate_design_invalid_payload() {
         .await
         .unwrap();
 
-    // Should be 422 Unprocessable Entity because of JSON extraction failure (missing fields)
-    assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    // Returns 400 Bad Request for JSON extraction failure (missing fields)
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let body_json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(body_json.get("code").unwrap().as_str().unwrap(), "BAD_REQUEST");
 }
 
 #[tokio::test]
@@ -143,7 +170,7 @@ async fn test_malformed_json() {
     let app = app();
 
     // Invalid JSON syntax (missing closing brace)
-    let invalid_json = r#"{ "purpose": { "use_case": "Test" "#; 
+    let invalid_json = r#"{ "purpose": { "use_case": "Test" "#;
 
     let response = app
         .oneshot(
@@ -157,16 +184,16 @@ async fn test_malformed_json() {
         .await
         .unwrap();
 
-    // Axum Json extractor returns 400 Bad Request for syntax errors
+    // Returns 400 Bad Request for syntax errors
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
 #[tokio::test]
 async fn test_wrong_content_type() {
     let app = app();
-    
+
     // Valid JSON payload but wrong header
-    let payload = json!({ "purpose": { "use_case": "Test" } }); // Minimal payload
+    let payload = json!({ "purpose": { "use_case": "Test" } });
 
     let response = app
         .oneshot(
@@ -180,8 +207,8 @@ async fn test_wrong_content_type() {
         .await
         .unwrap();
 
-    // Axum requires application/json by default for Json extractor
-    assert_eq!(response.status(), StatusCode::UNSUPPORTED_MEDIA_TYPE);
+    // Returns 400 Bad Request for wrong content type
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
 #[tokio::test]
@@ -189,15 +216,15 @@ async fn test_boolean_rendering_logic() {
     let app = app();
 
     // Create a payload with specific boolean values (false) to check rendering
-    let mut payload = json!({
+    let payload = json!({
         "purpose": { "use_case": "", "user_needs": "", "success_criteria": "", "constraints": "" },
         "prompt": { "goals": "", "role": "", "instructions": "", "guardrails": "" },
         "model": { "base_model": "", "parameters": "", "context_window": "", "cost_latency_tradeoff": "" },
         "tools": { "apis": [], "mcp_servers": [], "custom_functions": "" },
-        "memory": { 
+        "memory": {
             "episodic": false,  // Testing FALSE
-            "working_memory": false, 
-            "vector_db": "", "sql_db": "" 
+            "working_memory": false,
+            "vector_db": "", "sql_db": ""
         },
         "orchestration": { "workflow": "", "triggers": "", "error_handling": "" },
         "interface": { "platform": "", "interaction_mode": "", "api_endpoint": "" },

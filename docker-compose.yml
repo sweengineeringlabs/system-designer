@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./system-designer-agent/backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./system-designer-agent/backend/src:/app/src:ro
+      - backend-target:/app/target
+      - backend-cargo:/usr/local/cargo/registry
+    environment:
+      - RUST_LOG=debug
+      - APP_HOST=0.0.0.0
+      - APP_PORT=3000
+      - APP_CORS_ORIGINS=http://localhost:5173
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - system-designer-net
+
+  frontend:
+    build:
+      context: ./system-designer-agent/frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./system-designer-agent/frontend/src:/app/src:ro
+      - ./system-designer-agent/frontend/index.html:/app/index.html:ro
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - system-designer-net
+
+volumes:
+  backend-target:
+  backend-cargo:
+
+networks:
+  system-designer-net:
+    driver: bridge

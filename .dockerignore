@@ -1,0 +1,43 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+doc/
+*.md
+!README.md
+
+# IDE
+.vscode/
+.idea/
+
+# Rust
+**/target/
+**/*.rs.bk
+
+# Node
+**/node_modules/
+**/dist/
+**/.env
+**/.env.*
+!**/.env.example
+
+# Tauri
+**/src-tauri/target/
+**/src-tauri/gen/
+
+# Testing
+**/tests/
+**/*.test.*
+**/*.spec.*
+**/playwright-report/
+**/test-results/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.log
+*.tmp
+*.bak

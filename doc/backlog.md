@@ -1,8 +1,30 @@
-# Backlog
+# Feature Backlog
 
-## Markdown to Speech in Rust
+**Audience**: Developers, Product Managers
 
-### Approach
+## Overview
+
+This document tracks planned features and improvements for System Designer.
+
+## Planned Features
+
+### Markdown to Speech
+
+**Priority**: Medium
+**Status**: Research
+
+#### WHAT
+
+Add ability to read generated design specifications aloud using text-to-speech.
+
+#### WHY
+
+- Accessibility for visually impaired users
+- Hands-free review of specifications
+- Multi-modal content consumption
+
+#### HOW
+
 Combine Markdown parsing with Text-to-Speech (TTS):
 
 **1. Parse Markdown to plain text**
@@ -10,11 +32,11 @@ Combine Markdown parsing with Text-to-Speech (TTS):
 - `comrak` - GitHub-flavored Markdown parser
 
 **2. Text-to-Speech (TTS)**
-- `tts` crate - cross-platform TTS using native APIs (Windows SAPI, macOS AVSpeechSynthesizer, Linux speech-dispatcher)
-- Cloud APIs - Google Cloud TTS, AWS Polly, or Azure Speech via HTTP (using `reqwest`)
-- `coqui-stt` / local models - for offline neural TTS
+- `tts` crate - cross-platform TTS using native APIs
+- Cloud APIs - Google Cloud TTS, AWS Polly, Azure Speech
+- Local models - for offline neural TTS
 
-### Example Implementation
+**Example Implementation:**
 
 ```rust
 use pulldown_cmark::{Parser, Event, Tag};
@@ -46,7 +68,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-### Dependencies
+**Dependencies:**
 
 ```toml
 [dependencies]
@@ -54,6 +76,22 @@ pulldown-cmark = "0.10"
 tts = "0.26"
 ```
 
-### Notes
+**Notes:**
 - The `tts` crate works out of the box on Windows, macOS, and Linux
 - For higher quality voices, use a cloud API or neural TTS library
+
+---
+
+## Future Considerations
+
+| Feature | Priority | Status |
+|---------|----------|--------|
+| Markdown to Speech | Medium | Research |
+| Template Library | Low | Idea |
+| Export to PDF | Low | Idea |
+| Collaboration | Low | Idea |
+
+## Related Documentation
+
+- [Architecture](3-design/architecture.md) - System design
+- [Developer Guide](4-development/developer-guide.md) - Contributing
